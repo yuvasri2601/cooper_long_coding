@@ -1,0 +1,77 @@
+import mysql.connector
+mydb=mysql.connector.connect(host="localhost",user="root",password="yuvasri2601*J",database="hotel_management")
+mycursor=mydb.cursor()
+class Login:
+    def __init__(self,customerName,password):
+        self.customerName=customerName
+        self.password=password
+    def isAlreadyExistinguser(self):
+        mycursor.execute('select login_id,user_name,password from login where user_name like %s',(self.customerName,))
+        details=mycursor.fetchall()
+        for i in details:
+            if(i[1]==self.customerName and i[2]==self.password):
+                return i[0]
+class list_of_hotels:
+    def listofhotels(self):
+        mycursor.execute('select hotel_name from hotel')
+        details=mycursor.fetchall()
+        for i in set(details):
+            print("*",i[0])
+        select_hotel=input("Enter your hotel to check food table is available or not?: ")
+        mycursor.execute('select hotel_id,ratings,comments from hotel where hotel_name like %s',(select_hotel,))
+        detail=mycursor.fetchall()
+        for i in detail:
+            hotel_id=i[0]
+        #print(hotel_id)
+        mycursor.execute('select table_id,is_available from food_table')
+        d=mycursor.fetchall()
+        food_table_id=d[0][0]
+        availability=d[0][1]
+        #print(food_table_id)
+        if(hotel_id==food_table_id):
+            print("availability of table for reserving:",availability)
+        for i in detail:
+            print("Rating is:",i[1])
+            print("Comments:",i[2])
+        mycursor.execute('select room_id,room_availability,amount from rooms')
+        fetch=mycursor.fetchall()
+        for i in fetch:
+            if(i[0]==hotel_id):
+                print("Room_availability:",i[1],",Cost:",i[2])
+class Payment:
+    def payment(self):
+        paymentMethod = str(input('What is your payment method, 1. online or 2. cod(cash on delivery)'))
+        if paymentMethod == 'online':
+            accountHolderName = str(input('Enter your account holder name'))
+            accountNumber = int(input('Enter your account number'))
+            month = int(input('Enter your account valid month'))
+            year = int(input('Enter your account valid year'))
+            ccv = int(input('Enter your account valid ccv'))
+            address = str(input('Enter your address to deliver the order'))
+            mycursor.execute(
+                "insert into payment_details(paymentMethod,accountHolderName,accountNumber,month,year,cvv,address) values(%s,%s,%s,%s,%s,%s,%s)",
+                (paymentMethod, accountHolderName, accountNumber, month, year, ccv,address,))
+            mydb.commit()
+        else:
+            address = str(input('Enter your address to deliver the order'))
+            mycursor.execute(
+                "insert into payment_details(paymentMethod,address) values(%s,%s)",
+                (paymentMethod,address,))
+            mydb.commit()
+if __name__=="__main__":
+    customerName=input("Enter your name: ")
+    password=input("Enter your Password: ")
+    obj=Login(customerName,password)
+    calling_function=obj.isAlreadyExistinguser()
+    if calling_function:
+        #print("Existing user")
+        obj1=list_of_hotels()
+        obj1.listofhotels()
+        obj2=Payment()
+        obj2.payment()
+    else:
+        mobile_number=int(input("Enter your mobile number: "))
+        email=input("Enter your mail id: ")
+        location=input("Enter your location: ")
+        mycursor.execute("insert into login(user_name,password,mobile_no,email,location)values(%s,%s,%s,%s,%s)",(customerName,password,mobile_number,email,location,))
+        mydb.commit()
